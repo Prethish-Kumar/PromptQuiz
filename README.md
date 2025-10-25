@@ -1,8 +1,6 @@
-# QuizMaster: Multiplayer AI-Powered Quiz App
+# PromptQuiz: Multiplayer AI-Powered Quiz App
 
-![QuizMaster Banner](https://your-image-link.com/banner.png)
-
-**QuizMaster** is a real-time, multiplayer quiz platform built with modern web technologies. Users can create custom quiz rooms, invite friends, and enjoy interactive quizzes powered by AI. It’s designed for speed, scalability, and a delightful user experience.
+**PromptQuiz** is a real-time, multiplayer quiz platform built with modern web technologies. Users can create custom quiz rooms, invite friends, and enjoy interactive quizzes powered by AI. It’s designed for speed, scalability, and a delightful user experience.
 
 ---
 
@@ -53,8 +51,8 @@
 1. **Clone the repository**
 
 ```bash
-git clone https://github.com/yourusername/quizmaster.git
-cd quizmaster
+git clone https://github.com/yourusername/PromptQuiz.git
+cd PromptQuiz
 ```
 
 2. **Install dependencies**
