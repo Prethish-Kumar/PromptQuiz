@@ -1,65 +1,137 @@
-import Image from "next/image";
+"use client";
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { ArrowRight } from "lucide-react";
+import { easeOut } from "framer-motion";
 
 export default function Home() {
+  const [topic, setTopic] = useState("");
+
+  const handleGenerate = async () => {
+    if (!topic.trim()) return;
+
+    try {
+      console.log("Generating quiz for topic:", topic);
+
+      const res = await fetch("/api/createQuiz", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topic }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        console.log("Generated quiz:", data.quiz);
+        // You can now store it in state and render
+      } else {
+        console.error("API error:", data.error);
+      }
+    } catch (err) {
+      console.error("Failed to generate quiz:", err);
+    }
+  };
+
+  // 👇 Parent & child variants
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.2, // time between child animations
+        delayChildren: 0.2, // delay before first child starts
+      },
+    },
+  };
+
+  const item = {
+    hidden: { opacity: 0, filter: "blur(12px)", y: 20 },
+    show: {
+      opacity: 1,
+      filter: "blur(0px)",
+      y: 0,
+      transition: { duration: 0.8, ease: easeOut },
+    },
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <main className="relative min-h-screen bg-linear-to-b from-gray-950 via-gray-900 to-gray-800 flex flex-col items-center justify-center text-center px-4 overflow-hidden">
+      {/* Background glow */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(99,102,241,0.2),transparent_90%)] animate-pulse-slow" />
+
+      {/* 👇 Animate everything as children */}
+      <motion.div
+        variants={container}
+        initial="hidden"
+        animate="show"
+        className="relative z-10 flex flex-col items-center"
+      >
+        <motion.img
+          variants={item}
+          src="/logo.png"
+          alt="AI Quiz Generator Logo"
+          className="mb-6 drop-shadow-lg"
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+
+        <motion.h1
+          variants={item}
+          className="text-5xl md:text-6xl font-extrabold text-white leading-tight mb-4"
+        >
+          Generate AI Quizzes on <br />
+          <span className="text-indigo-400">Any Topic Instantly</span>
+        </motion.h1>
+
+        <motion.p
+          variants={item}
+          className="text-gray-400 max-w-lg mb-8 text-lg"
+        >
+          Type any topic — from physics to football — and our AI will craft a
+          personalized quiz just for you.
+        </motion.p>
+
+        <motion.div
+          variants={item}
+          className="flex w-full max-w-md bg-gray-900/60 border border-gray-700 rounded-2xl overflow-hidden shadow-lg backdrop-blur-md"
+        >
+          <input
+            type="text"
+            value={topic}
+            onChange={(e) => setTopic(e.target.value)}
+            placeholder="Enter a topic (e.g. World War II)"
+            className="flex-1 px-4 py-3 bg-transparent text-white focus:outline-none placeholder-gray-500"
+          />
+          <button
+            onClick={handleGenerate}
+            className="bg-indigo-500 hover:bg-indigo-600 px-5 flex items-center gap-2 transition-colors"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+            <span className="font-medium">Generate</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </motion.div>
+
+        <motion.p variants={item} className="text-gray-500 text-sm mt-10">
+          Powered by <span className="text-indigo-400 font-medium">OpenAI</span>{" "}
+          🚀
+        </motion.p>
+      </motion.div>
+
+      {/* Background pulse animation */}
+      <style jsx global>{`
+        @keyframes pulseSlow {
+          0%,
+          100% {
+            opacity: 0.8;
+            transform: scale(1);
+          }
+          50% {
+            opacity: 1;
+            transform: scale(1.02);
+          }
+        }
+        .animate-pulse-slow {
+          animation: pulseSlow 3s ease-in-out infinite;
+        }
+      `}</style>
+    </main>
   );
 }
