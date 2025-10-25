@@ -1,46 +1,97 @@
 "use client";
-import { useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
-import { easeOut } from "framer-motion";
+import { ArrowRight, Plus, LogIn } from "lucide-react";
+import { io } from "socket.io-client";
+import { useRouter } from "next/navigation";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useState } from "react";
+const URL = process.env.PUBLIC_SOCKET_URL || "http://localhost:4000";
+const socket = io(URL);
 
 export default function Home() {
-  const [topic, setTopic] = useState("");
+  const router = useRouter();
 
-  const handleGenerate = async () => {
-    if (!topic.trim()) return;
+  const [joinOpen, setJoinOpen] = useState(false);
+  const [joinRoomId, setJoinRoomId] = useState("");
 
-    try {
-      console.log("Generating quiz for topic:", topic);
+  function getRandomFunnyName() {
+    const funnyNames = [
+      "Quantum Potato",
+      "Disco Duckling",
+      "Toaster Wizard",
+      "Angry Mango",
+      "Sassy Turtle",
+      "Banana Overlord",
+      "Captain Obvious",
+      "Ninja Pancake",
+      "Waffle Ninja",
+      "Lazy Comet",
+      "Sir Licks A Lot",
+      "Spicy Cloud",
+      "Emotional Support Cactus",
+      "Bureaucratic Sloth",
+      "Unstable Unicorn",
+      "Keyboard Samurai",
+      "Hyperactive Marshmallow",
+      "Caffeinated Koala",
+      "Suspicious Muffin",
+      "Dumpster Philosopher",
+    ];
 
-      const res = await fetch("/api/createQuiz", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic }),
-      });
+    const randomIndex = Math.floor(Math.random() * funnyNames.length);
+    return funnyNames[randomIndex];
+  }
 
-      const data = await res.json();
+  function getRandomAvatar() {
+    const avatars = [
+      "bear",
+      "elephant",
+      "ghost",
+      "hen",
+      "horse",
+      "rabbit",
+      "sea-lion",
+      "shark",
+      "sloth",
+      "tiger",
+    ];
 
-      if (res.ok) {
-        console.log("Generated quiz:", data.quiz);
-        // You can now store it in state and render
-      } else {
-        console.error("API error:", data.error);
-      }
-    } catch (err) {
-      console.error("Failed to generate quiz:", err);
-    }
+    const randomIndex = Math.floor(Math.random() * avatars.length);
+    return avatars[randomIndex];
+  }
+
+  if (localStorage.getItem("guestId") === null) {
+    localStorage.setItem("guestId", Math.random().toString(36).substr(2, 9));
+    localStorage.setItem("guestName", getRandomFunnyName());
+    localStorage.setItem("guestAvatar", getRandomAvatar());
+  }
+
+  const handleCreateRoom = () => {
+    const roomId = Math.random().toString(36).substr(2, 9);
+    socket.emit("create_room", {
+      hostId: localStorage.getItem("guestId"),
+      hostName: localStorage.getItem("guestName"),
+      hostAvatar: localStorage.getItem("guestAvatar"),
+      roomId: roomId,
+    });
+    localStorage.setItem("lastRoomId", roomId);
+    router.push(`/room/${roomId}`);
   };
 
-  // 👇 Parent & child variants
+  const handleJoinRoom = (joinRoomId) => {
+    router.push(`/room/${joinRoomId}`);
+  };
+
   const container = {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
-      transition: {
-        staggerChildren: 0.2, // time between child animations
-        delayChildren: 0.2, // delay before first child starts
-      },
+      transition: { staggerChildren: 0.2, delayChildren: 0.2 },
     },
   };
 
@@ -50,16 +101,15 @@ export default function Home() {
       opacity: 1,
       filter: "blur(0px)",
       y: 0,
-      transition: { duration: 0.8, ease: easeOut },
+      transition: { duration: 0.8 },
     },
   };
 
   return (
-    <main className="relative min-h-screen bg-linear-to-b from-gray-950 via-gray-900 to-gray-800 flex flex-col items-center justify-center text-center px-4 overflow-hidden">
+    <main className="relative min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-800 flex flex-col items-center justify-center text-center px-4 overflow-hidden">
       {/* Background glow */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(99,102,241,0.2),transparent_90%)] animate-pulse-slow" />
 
-      {/* 👇 Animate everything as children */}
       <motion.div
         variants={container}
         initial="hidden"
@@ -77,45 +127,64 @@ export default function Home() {
           variants={item}
           className="text-5xl md:text-6xl font-extrabold text-white leading-tight mb-4"
         >
-          Generate AI Quizzes on <br />
-          <span className="text-indigo-400">Any Topic Instantly</span>
+          Any Topic. Instant Fun!
         </motion.h1>
 
         <motion.p
           variants={item}
           className="text-gray-400 max-w-lg mb-8 text-lg"
         >
-          Type any topic — from physics to football — and our AI will craft a
-          personalized quiz just for you.
+          Never run out of challenges. Create, play, and repeat!
         </motion.p>
 
-        <motion.div
-          variants={item}
-          className="flex w-full max-w-md bg-gray-900/60 border border-gray-700 rounded-2xl overflow-hidden shadow-lg backdrop-blur-md"
-        >
-          <input
-            type="text"
-            value={topic}
-            onChange={(e) => setTopic(e.target.value)}
-            placeholder="Enter a topic (e.g. World War II)"
-            className="flex-1 px-4 py-3 bg-transparent text-white focus:outline-none placeholder-gray-500"
-          />
+        {/* Buttons */}
+        <motion.div variants={item} className="flex gap-4">
           <button
-            onClick={handleGenerate}
-            className="bg-indigo-500 hover:bg-indigo-600 px-5 flex items-center gap-2 transition-colors"
+            onClick={handleCreateRoom}
+            className="flex items-center gap-2  bg-indigo-500 hover:bg-indigo-600 text-white px-6 py-3 rounded-xl font-medium shadow-lg transition"
           >
-            <span className="font-medium">Generate</span>
-            <ArrowRight className="w-4 h-4" />
+            <Plus className="w-5 h-5" /> Create Room
+          </button>
+
+          <button
+            onClick={() => setJoinOpen(true)}
+            className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-white px-6 py-3 rounded-xl font-medium shadow-lg transition"
+          >
+            <LogIn className="w-5 h-5" /> Join Room
           </button>
         </motion.div>
-
-        <motion.p variants={item} className="text-gray-500 text-sm mt-10">
-          Powered by <span className="text-indigo-400 font-medium">OpenAI</span>{" "}
-          🚀
-        </motion.p>
       </motion.div>
 
-      {/* Background pulse animation */}
+      <Dialog open={joinOpen} onOpenChange={setJoinOpen}>
+        <DialogContent className="bg-gray-900 border border-gray-700 text-white max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-lg text-indigo-400 mb-2">
+              Join a Room
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <input
+              type="text"
+              value={joinRoomId}
+              onChange={(e) => setJoinRoomId(e.target.value)}
+              placeholder="Enter Room ID"
+              className="w-full px-4 py-2 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+            <div className="flex justify-end">
+              <button
+                onClick={() => {
+                  handleJoinRoom(joinRoomId);
+                  setJoinOpen(false);
+                }}
+                className="bg-indigo-500 hover:bg-indigo-600 px-6 py-2 rounded-lg font-medium"
+              >
+                Join
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <style jsx global>{`
         @keyframes pulseSlow {
           0%,

@@ -1,11 +1,16 @@
 import { GoogleGenAI, Type } from "@google/genai";
+import { Redis } from "@upstash/redis";
 
-// Make sure your API key is in .env.local as GENAI_API_KEY
+export const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN,
+});
+
 const ai = new GoogleGenAI({
   apiKey: process.env.GENAI_API_KEY,
 });
 
-async function createQuiz(topic) {
+async function createQuiz(topic, roomId) {
   if (!topic || !topic.trim()) throw new Error("Topic is required");
 
   const response = await ai.models.generateContent({
@@ -41,17 +46,24 @@ Each question should have 4 options, specify the correct answer index (0-based),
 
 export async function POST(request) {
   try {
-    const { topic } = await request.json();
+    const { topic, roomId } = await request.json();
+    const roomKey = `room:${roomId}`;
+    const roomJSON = await redis.get(roomKey);
 
-    if (!topic || !topic.trim()) {
-      return new Response(JSON.stringify({ error: "Topic is required" }), {
-        status: 400,
+    if (!roomJSON) {
+      return new Response(JSON.stringify({ error: "Room not found" }), {
+        status: 404,
       });
     }
 
-    const quiz = await createQuiz(topic);
+    const newQuiz = await createQuiz(topic, roomId);
 
-    return new Response(JSON.stringify({ quiz }), {
+    roomJSON.quiz = newQuiz;
+    await redis.set(roomKey, JSON.stringify(roomJSON));
+
+    console.log("Updated room in Redis:", roomId);
+
+    return new Response("Success", {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
